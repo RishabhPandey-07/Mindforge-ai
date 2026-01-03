@@ -26,6 +26,11 @@ SECRET_KEY = 'django-insecure-qgtm)zibpdh#dnc1rbifp@ee#ubm7p^l7(3vqs_r+d8*1ut8oo
 DEBUG = True
 
 ALLOWED_HOSTS = []
+# Authentication redirects
+LOGIN_URL = "/accounts/login/"
+LOGIN_REDIRECT_URL = "/dashboard/"
+LOGOUT_REDIRECT_URL = "/accounts/login/"
+
 
 
 # Application definition
