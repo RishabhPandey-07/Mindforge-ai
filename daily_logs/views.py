@@ -1,3 +1,4 @@
+from django.contrib import messages
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from .models import DailyLog
@@ -12,6 +13,8 @@ def log_list(request):
 def add_log(request):
     if request.method == "POST":
         content = request.POST.get("content")
+        messages.success(request, "Daily log added successfully.")
+
 
         if content:
             DailyLog.objects.create(
@@ -29,7 +32,25 @@ def delete_log(request, log_id):
 
     if request.method == "POST":
         log.delete()
+        messages.success(request, "Daily log deleted.")
+
 
     return redirect("daily_logs:log_list")
+
+@login_required
+def edit_log(request, log_id):
+    log = get_object_or_404(DailyLog, id=log_id, user=request.user)
+
+    if request.method == "POST":
+        content = request.POST.get("content")
+        messages.success(request, "Daily log updated.")
+
+
+        if content:
+            log.content = content
+            log.save()
+            return redirect("daily_logs:log_list")
+
+    return render(request, "daily_logs/edit_log.html", {"log": log})
 
 

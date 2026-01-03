@@ -1,0 +1,31 @@
+{% extends "core/base.html" %}
+
+{% block title %}Edit Log{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+
+    <h2>✏ Edit Daily Log</h2>
+
+    <form method="post">
+        {% csrf_token %}
+
+        <div class="mb-3">
+            <textarea name="content"
+                      class="form-control"
+                      rows="5"
+                      required>{{ log.content }}</textarea>
+        </div>
+
+        <button type="submit" class="btn btn-success">
+            Save Changes
+        </button>
+
+        <a href="{% url 'daily_logs:log_list' %}"
+           class="btn btn-secondary">
+            Cancel
+        </a>
+    </form>
+
+</div>
+{% endblock %}

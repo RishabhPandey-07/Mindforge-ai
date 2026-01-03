@@ -1,16 +1,59 @@
 {% extends "core/base.html" %}
 
+{% block title %}Dashboard{% endblock %}
 
 {% block content %}
-    <h2>{{ user.username }}'s Dashboard</h2>
+<h2 class="mb-4">Welcome, {{ request.user.username }}</h2>
 
-    <p>Welcome to your personal space.</p>
-    <a href="{% url 'daily_logs:log_list' %}">Daily Logs</a>
+<div class="row">
 
-    <ul>
-        <li>Daily Logs (coming soon)</li>
-        <li>Learning Tracker (coming soon)</li>
-        <li>Goals (coming soon)</li>
-        <li>AI Insights (coming soon)</li>
-    </ul>
+  <div class="col-md-3">
+    <div class="card shadow-sm">
+      <div class="card-body text-center">
+        <h5>📓 Daily Logs</h5>
+        <p class="text-muted">Track your daily thoughts</p>
+        <a href="{% url 'daily_logs:log_list' %}" class="btn btn-outline-primary btn-sm">
+          Open
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-3">
+    <div class="card shadow-sm">
+      <div class="card-body text-center">
+        <h5>🎯 Goals</h5>
+        <p class="text-muted">Coming soon</p>
+        <button class="btn btn-outline-secondary btn-sm" disabled>
+          Locked
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-3">
+    <div class="card shadow-sm">
+      <div class="card-body text-center">
+        <h5>📚 Learning</h5>
+        <p class="text-muted">Coming soon</p>
+        <button class="btn btn-outline-secondary btn-sm" disabled>
+          Locked
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-3">
+    <div class="card shadow-sm">
+      <div class="card-body text-center">
+        <h5>🤖 AI Insights</h5>
+        <p class="text-muted">Coming soon</p>
+        <button class="btn btn-outline-secondary btn-sm" disabled>
+          Locked
+        </button>
+      </div>
+    </div>
+  </div>
+
+</div>
 {% endblock %}

@@ -16,27 +16,41 @@
     {% if logs %}
         <div class="list-group">
             {% for log in logs %}
-                <form method="post"
-                    action="{% url 'daily_logs:delete_log' log.id %}"
-                    style="display:inline;">
-                 {% csrf_token %}
-                 <button type="submit"
-                         class="btn btn-sm btn-outline-danger"
-                         onclick="return confirm('Are you sure you want to delete this log?');">
-                     🗑 Delete
-                 </button>
-            </form>
-                <div class="list-group-item mb-3 shadow-sm rounded">
+              <div class="card mb-3 shadow-sm">
+                <div class="card-body">
+                
+                  <div class="d-flex justify-content-between align-items-center mb-2">
                     <small class="text-muted">
-                        {{ log.created_at|date:"d M Y, h:i A" }}
+                      {{ log.created_at|date:"d M Y, h:i A" }}
                     </small>
-
-                    <p class="mt-2 mb-0">
-                        {{ log.content|linebreaks }}
-                    </p>
+                
+                    <div>
+                      <a href="{% url 'daily_logs:edit_log' log.id %}"
+                         class="btn btn-sm btn-outline-primary">
+                        ✏ Edit
+                      </a>
+                  
+                      <form method="post"
+                            action="{% url 'daily_logs:delete_log' log.id %}"
+                            style="display:inline;">
+                        {% csrf_token %}
+                        <button type="submit"
+                                class="btn btn-sm btn-outline-danger"
+                                onclick="return confirm('Delete this log?');">
+                          🗑 Delete
+                        </button>
+                      </form>
+                    </div>
+                  </div>
+              
+                  <p class="card-text">
+                    {{ log.content|linebreaks }}
+                  </p>
+              
                 </div>
+              </div>
             {% endfor %}
-        </div>
+                   </div>
     {% else %}
         <div class="alert alert-info text-center">
             <p class="mb-1">No logs yet.</p>
