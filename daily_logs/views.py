@@ -22,4 +22,14 @@ def add_log(request):
 
     return render(request, "daily_logs/add_log.html")
 
+    
+@login_required
+def delete_log(request, log_id):
+    log = get_object_or_404(DailyLog, id=log_id, user=request.user)
+
+    if request.method == "POST":
+        log.delete()
+
+    return redirect("daily_logs:log_list")
+
 
