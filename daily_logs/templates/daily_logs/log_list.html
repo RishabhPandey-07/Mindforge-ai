@@ -17,15 +17,9 @@
         <div class="list-group">
             {% for log in logs %}
                 <div class="list-group-item mb-3 shadow-sm rounded">
-                    <div class="d-flex justify-content-between">
-                        <small class="text-muted">
-                            {{ log.created_at|date:"d M Y, h:i A" }}
-                        </small>
-                        <a href="{% url 'daily_logs:delete_log' log.id %}"
-                           class="text-danger text-decoration-none">
-                            Delete
-                        </a>
-                    </div>
+                    <small class="text-muted">
+                        {{ log.created_at|date:"d M Y, h:i A" }}
+                    </small>
 
                     <p class="mt-2 mb-0">
                         {{ log.content|linebreaks }}

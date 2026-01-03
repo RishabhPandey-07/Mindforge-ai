@@ -1,7 +1,8 @@
 from django.urls import path
-from .views import log_list, add_log
+from . import views
 app_name = "daily_logs" 
 urlpatterns = [
-    path("", log_list, name="log_list"),
-    path("add/", add_log, name="add_log"),
+    path("", views.log_list, name="log_list"),
+    path("add/", views.add_log, name="add_log"),
+
 ]

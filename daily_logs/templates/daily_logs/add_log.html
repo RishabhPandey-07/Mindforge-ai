@@ -1,12 +1,28 @@
-{% extends "base.html" %}
+{% extends "core/base.html" %}
 
 {% block content %}
-<h2>Add Daily Log</h2>
+<div class="container mt-4">
 
-<form method="post">
-    {% csrf_token %}
-    <input type="text" name="title" placeholder="Title" required><br><br>
-    <textarea name="content" placeholder="What happened today?" required></textarea><br><br>
-    <button type="submit">Save</button>
-</form>
+    <h2>Add Daily Log</h2>
+
+    <form method="post">
+        {% csrf_token %}
+
+        <div class="mb-3">
+            <textarea name="content"
+                      class="form-control"
+                      rows="5"
+                      placeholder="Write your thoughts..."></textarea>
+        </div>
+
+        <button type="submit" class="btn btn-success">
+            Save Log
+        </button>
+
+        <a href="{% url 'daily_logs:log_list' %}" class="btn btn-secondary">
+            Cancel
+        </a>
+    </form>
+
+</div>
 {% endblock %}
