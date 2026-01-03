@@ -1,9 +1,12 @@
-{% extends "base.html" %}
+{% extends "core/base.html" %}
+
 
 {% block content %}
     <h2>{{ user.username }}'s Dashboard</h2>
 
     <p>Welcome to your personal space.</p>
+    <a href="{% url 'log_list' %}">📝 Daily Logs</a>
+
 
     <ul>
         <li>Daily Logs (coming soon)</li>

@@ -1,0 +1,45 @@
+{% extends "core/base.html" %}
+
+{% block title %}Daily Logs{% endblock %}
+
+{% block content %}
+
+<div class="container mt-4">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>📝 Daily Logs</h2>
+        <a href="{% url 'daily_logs:add_log' %}" class="btn btn-primary">
+            + Add New Log
+        </a>
+    </div>
+
+    {% if logs %}
+        <div class="list-group">
+            {% for log in logs %}
+                <div class="list-group-item mb-3 shadow-sm rounded">
+                    <div class="d-flex justify-content-between">
+                        <small class="text-muted">
+                            {{ log.created_at|date:"d M Y, h:i A" }}
+                        </small>
+                        <a href="{% url 'daily_logs:delete_log' log.id %}"
+                           class="text-danger text-decoration-none">
+                            Delete
+                        </a>
+                    </div>
+
+                    <p class="mt-2 mb-0">
+                        {{ log.content|linebreaks }}
+                    </p>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="alert alert-info text-center">
+            <p class="mb-1">No logs yet.</p>
+            <p class="mb-0">Start writing your first daily thought 🚀</p>
+        </div>
+    {% endif %}
+
+</div>
+
+{% endblock %}
