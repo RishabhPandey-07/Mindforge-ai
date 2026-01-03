@@ -1,0 +1,37 @@
+{% extends "core/base.html" %}
+
+{% block title %}AI Insights{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+
+    <h2>🤖 AI Insights</h2>
+
+    {% if message %}
+        <div class="alert alert-warning">
+            {{ message }}
+        </div>
+    {% else %}
+        <ul class="list-group mt-3">
+            <li class="list-group-item">
+                <strong>Total Logs:</strong> {{ total_logs }}
+            </li>
+
+            <li class="list-group-item">
+                <strong>Last Activity:</strong>
+                {{ last_log_date|date:"d M Y, h:i A" }}
+            </li>
+
+            <li class="list-group-item">
+                <strong>Most Common Words:</strong>
+                <ul>
+                    {% for word, count in common_words %}
+                        <li>{{ word }} ({{ count }})</li>
+                    {% endfor %}
+                </ul>
+            </li>
+        </ul>
+    {% endif %}
+
+</div>
+{% endblock %}

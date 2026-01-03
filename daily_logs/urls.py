@@ -6,6 +6,8 @@ urlpatterns = [
     path("add/", views.add_log, name="add_log"),
     path("delete/<int:log_id>/", views.delete_log, name="delete_log"),
     path("edit/<int:log_id>/", views.edit_log, name="edit_log"),
+    path("ai/", views.ai_insights, name="ai_insights"),
+
 
 
 ]

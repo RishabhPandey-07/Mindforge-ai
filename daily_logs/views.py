@@ -2,6 +2,8 @@ from django.contrib import messages
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from .models import DailyLog
+from collections import Counter
+import re
 
 @login_required
 def log_list(request):
@@ -52,5 +54,31 @@ def edit_log(request, log_id):
             return redirect("daily_logs:log_list")
 
     return render(request, "daily_logs/edit_log.html", {"log": log})
+
+@login_required
+def ai_insights(request):
+    logs = DailyLog.objects.filter(user=request.user)
+
+    # If user has no logs
+    if not logs.exists():
+        return render(request, "daily_logs/ai_insights.html", {
+            "message": "No logs available to analyze."
+        })
+
+    full_text = " ".join(log.content for log in logs)
+
+    # Clean text: lowercase, remove symbols
+    words = re.findall(r"\b\w+\b", full_text.lower())
+
+    common_words = Counter(words).most_common(5)
+
+    context = {
+        "total_logs": logs.count(),
+        "last_log_date": logs.latest("created_at").created_at,
+        "common_words": common_words,
+    }
+
+    return render(request, "daily_logs/ai_insights.html", context)
+
 
 

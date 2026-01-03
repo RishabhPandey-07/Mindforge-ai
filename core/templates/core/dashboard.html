@@ -47,10 +47,14 @@
     <div class="card shadow-sm">
       <div class="card-body text-center">
         <h5>🤖 AI Insights</h5>
-        <p class="text-muted">Coming soon</p>
-        <button class="btn btn-outline-secondary btn-sm" disabled>
+        <p class="text-muted">Recommendations</p>
+        {% comment %} <button class="btn btn-outline-secondary btn-sm" disabled>
           Locked
-        </button>
+        </button> {% endcomment %}
+        <a href="{% url 'daily_logs:ai_insights' %}"
+           class="btn btn-outline-primary btn-sm">
+           View Insights
+        </a>
       </div>
     </div>
   </div>
