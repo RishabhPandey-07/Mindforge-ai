@@ -1,0 +1,25 @@
+{% extends "core/base.html" %}
+
+{% block title %}AI Insights{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+
+    <h2>🤖 AI Reflection</h2>
+
+    {% if error %}
+        <div class="alert alert-warning">
+            {{ error }}
+        </div>
+    {% else %}
+        <div class="card mt-3 shadow-sm">
+            <div class="card-body">
+                <pre style="white-space: pre-wrap;">
+{{ ai_result }}
+                </pre>
+            </div>
+        </div>
+    {% endif %}
+
+</div>
+{% endblock %}

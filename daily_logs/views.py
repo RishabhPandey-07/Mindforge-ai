@@ -3,7 +3,10 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from .models import DailyLog
 from collections import Counter
+from .ai_service import generate_log_summary
+
 import re
+
 
 @login_required
 def log_list(request):
@@ -80,5 +83,21 @@ def ai_insights(request):
 
     return render(request, "daily_logs/ai_insights.html", context)
 
+@login_required
+def ai_summary(request):
+    logs = DailyLog.objects.filter(user=request.user)
+
+    if not logs.exists():
+        return render(request, "daily_logs/ai_summary.html", {
+            "error": "No logs available for AI analysis."
+        })
+
+    combined_text = "\n".join(log.content for log in logs)
+
+    ai_result = generate_log_summary(combined_text)
+
+    return render(request, "daily_logs/ai_summary.html", {
+        "ai_result": ai_result
+    })
 
 
