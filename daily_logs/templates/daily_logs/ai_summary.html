@@ -1,6 +1,12 @@
 {% extends "core/base.html" %}
 
 {% block title %}AI Insights{% endblock %}
+{% if cached %}
+    <div class="alert alert-success">
+        ⚡ Showing cached AI insights (fast response)
+    </div>
+{% endif %}
+
 
 {% block content %}
 <div class="container mt-4">
