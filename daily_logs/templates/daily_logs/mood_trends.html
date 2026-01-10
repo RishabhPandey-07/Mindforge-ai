@@ -5,10 +5,14 @@
 {% block content %}
 <div class="container mt-4">
 
-    <h2>📈 Mood Trends</h2>
+    <h2>📈 Mood Trends Over Time</h2>
 
     {% if trends %}
-        <table class="table table-bordered mt-3">
+        <!-- Chart Canvas -->
+        <canvas id="moodChart" height="100"></canvas>
+
+        <!-- Table (backup + clarity) -->
+        <table class="table table-bordered mt-4">
             <thead>
                 <tr>
                     <th>Date</th>
@@ -27,8 +31,47 @@
             </tbody>
         </table>
     {% else %}
-        <p>No trend data available yet.</p>
+        <p>No mood data available yet.</p>
     {% endif %}
 
 </div>
+
+<!-- Chart.js CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+    /*
+        Graph logic lives in frontend,
+        but data is prepared by Django backend.
+    */
+
+    const labels = {{ dates|safe }};
+    const dataScores = {{ scores|safe }};
+
+    const ctx = document.getElementById('moodChart').getContext('2d');
+
+    new Chart(ctx, {
+        type: 'line',   // Line chart for trends
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Mood Score',
+                data: dataScores,
+                borderColor: 'blue',
+                backgroundColor: 'rgba(0, 123, 255, 0.1)',
+                tension: 0.3,   // Smooth curve
+                fill: true
+            }]
+        },
+        options: {
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 10
+                }
+            }
+        }
+    });
+</script>
+
 {% endblock %}

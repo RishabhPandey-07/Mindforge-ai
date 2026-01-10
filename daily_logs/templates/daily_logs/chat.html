@@ -1,0 +1,32 @@
+{% extends "core/base.html" %}
+
+{% block title %}Chat with Your Logs{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+
+    <h2>💬 Chat with Your Logs</h2>
+
+    <!-- Chat Form -->
+    <form method="POST" class="mb-4">
+        {% csrf_token %}
+        <div class="mb-3">
+            <label class="form-label">Ask a question</label>
+            <input type="text" name="question" class="form-control"
+                   placeholder="Why was I stressed last week?" required>
+        </div>
+        <button type="submit" class="btn btn-primary">Ask</button>
+    </form>
+
+    <!-- AI Answer -->
+    {% if answer %}
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h5>AI Answer</h5>
+                <p>{{ answer }}</p>
+            </div>
+        </div>
+    {% endif %}
+
+</div>
+{% endblock %}

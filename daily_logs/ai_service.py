@@ -86,3 +86,40 @@ Daily Logs:
             result["suggestion"] = line.replace("SUGGESTION:", "").strip()
 
     return result
+
+
+def chat_with_logs(user_logs: str, user_question: str) -> str:
+    """
+    Allows the user to chat with their own logs.
+
+    Inputs:
+    - user_logs (str): Combined text of user's historical logs
+    - user_question (str): User's question
+
+    Output:
+    - AI-generated answer grounded strictly in the logs
+    """
+
+    prompt = f"""
+You are a personal reflection assistant.
+
+RULES:
+- Answer ONLY using the user's logs.
+- If the answer is not present in the logs, say:
+  "I don't have enough information from your logs."
+
+USER LOGS:
+{user_logs}
+
+QUESTION:
+{user_question}
+"""
+
+    response = client.chat.completions.create(
+        model="llama-3.1-8b-instant",
+        messages=[
+            {"role": "user", "content": prompt}
+        ]
+    )
+
+    return response.choices[0].message.content

@@ -15,6 +15,8 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.core.cache import cache
 from django.utils.timezone import now
+from .ai_service import chat_with_logs
+
 
 from collections import Counter
 import re
@@ -167,11 +169,44 @@ def ai_summary(request):
 @login_required
 def mood_trends(request):
     """
-    Displays historical mood trends for the user.
+    Displays historical mood trends for the user
+    and prepares data for graph visualization.
     """
 
     trends = MoodTrend.objects.filter(user=request.user)
 
-    return render(request, "daily_logs/mood_trends.html", {
-        "trends": trends
+    # Prepare data for chart (backend responsibility)
+    dates = [t.created_at.strftime("%d %b") for t in trends]
+    scores = [t.score for t in trends]
+
+    context = {
+        "trends": trends,
+        "dates": dates,
+        "scores": scores,
+    }
+
+    return render(request, "daily_logs/mood_trends.html", context)
+
+@login_required
+def chat_logs(request):
+    """
+    Handles chat interaction between the user and their logs.
+    """
+
+    answer = None
+
+    if request.method == "POST":
+        question = request.POST.get("question")
+
+        # Collect all logs for this user
+        logs = DailyLog.objects.filter(user=request.user)
+
+        if logs.exists() and question:
+            combined_logs = "\n".join(log.content for log in logs)
+
+            # Call AI chat service
+            answer = chat_with_logs(combined_logs, question)
+
+    return render(request, "daily_logs/chat.html", {
+        "answer": answer
     })
