@@ -14,37 +14,54 @@
 
 <!-- NAVBAR -->
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-    <div class="container">
-        <a class="navbar-brand" href="{% url 'home' %}">Mind Forge AI</a>
+    <div class="container-fluid">
 
-        <div class="collapse navbar-collapse justify-content-end">
-            <ul class="navbar-nav">
+        <!-- App name -->
+        <a class="navbar-brand" href="{% url 'dashboard' %}">
+            MindForge AI
+        </a>
+
+        <div class="collapse navbar-collapse">
+            <ul class="navbar-nav ms-auto">
 
                 {% if user.is_authenticated %}
+                    <!-- Main Features -->
                     <li class="nav-item">
-                        <a class="nav-link" href="{% url 'dashboard' %}">
-                            Dashboard
+                        <a class="nav-link" href="{% url 'daily_logs:log_list' %}">
+                            Logs
                         </a>
                     </li>
 
                     <li class="nav-item">
-                        <span class="nav-link text-light">
-                            Welcome, {{ user.username }}
-                        </span>
+                        <a class="nav-link" href="{% url 'daily_logs:ai_summary' %}">
+                            AI Summary
+                        </a>
                     </li>
 
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'daily_logs:mood_trends' %}">
+                            Mood Trends
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'daily_logs:chat_logs' %}">
+                            Chat
+                        </a>
+                    </li>
+
+                    <!-- Logout -->
                     <li class="nav-item">
                         <a class="nav-link text-danger" href="{% url 'logout' %}">
                             Logout
                         </a>
                     </li>
                 {% else %}
+                    <!-- Login -->
                     <li class="nav-item">
-                        <a class="nav-link" href="{% url 'login' %}">Login</a>
-                    </li>
-
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'signup' %}">Signup</a>
+                        <a class="nav-link" href="{% url 'login' %}">
+                            Login
+                        </a>
                     </li>
                 {% endif %}
 
@@ -52,6 +69,7 @@
         </div>
     </div>
 </nav>
+
 
 <!-- PAGE CONTENT -->
 <div class="container mt-4">

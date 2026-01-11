@@ -1,68 +1,70 @@
+
 {% extends "core/base.html" %}
 
 {% block title %}Dashboard{% endblock %}
 
 {% block content %}
-<h2 class="mb-4">Welcome, {{ request.user.username }}</h2>
+<div class="container mt-5">
 
-<div class="row">
+    <h2>Welcome, {{ user.username }} 👋</h2>
+    <p class="text-muted">
+        This is your personal AI-powered reflection space.
+    </p>
 
-  <div class="col-md-3">
-    <div class="card shadow-sm">
-      <div class="card-body text-center">
-        <h5>📓 Daily Logs</h5>
-        <p class="text-muted">Track your daily thoughts</p>
-        <a href="{% url 'daily_logs:log_list' %}" class="btn btn-outline-primary btn-sm">
-          Open
-        </a>
-      </div>
+    <div class="row mt-4">
+
+        <!-- Logs -->
+        <div class="col-md-3">
+            <div class="card shadow-sm text-center">
+                <div class="card-body">
+                    <h5>📝 Daily Logs</h5>
+                    <p>Write and manage your thoughts.</p>
+                    <a href="{% url 'daily_logs:log_list' %}" class="btn btn-primary btn-sm">
+                        View Logs
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- AI Summary -->
+        <div class="col-md-3">
+            <div class="card shadow-sm text-center">
+                <div class="card-body">
+                    <h5>🤖 AI Summary</h5>
+                    <p>AI-generated insights.</p>
+                    <a href="{% url 'daily_logs:ai_summary' %}" class="btn btn-success btn-sm">
+                        View Summary
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mood Trends -->
+        <div class="col-md-3">
+            <div class="card shadow-sm text-center">
+                <div class="card-body">
+                    <h5>📈 Mood Trends</h5>
+                    <p>Track emotional patterns.</p>
+                    <a href="{% url 'daily_logs:mood_trends' %}" class="btn btn-info btn-sm">
+                        View Trends
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chat -->
+        <div class="col-md-3">
+            <div class="card shadow-sm text-center">
+                <div class="card-body">
+                    <h5>💬 Chat</h5>
+                    <p>Ask questions to your logs.</p>
+                    <a href="{% url 'daily_logs:chat_logs' %}" class="btn btn-warning btn-sm">
+                        Start Chat
+                    </a>
+                </div>
+            </div>
+        </div>
+
     </div>
-  </div>
-
-  <div class="col-md-3">
-    <div class="card shadow-sm">
-      <div class="card-body text-center">
-        <h5>🎯 Goals</h5>
-        <p class="text-muted">Coming soon</p>
-        <button class="btn btn-outline-secondary btn-sm" disabled>
-          Locked
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <div class="col-md-3">
-    <div class="card shadow-sm">
-      <div class="card-body text-center">
-        <h5>📚 Learning</h5>
-        <p class="text-muted">Coming soon</p>
-        <button class="btn btn-outline-secondary btn-sm" disabled>
-          Locked
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <div class="col-md-3">
-    <div class="card shadow-sm">
-      <div class="card-body text-center">
-        <h5>🤖 AI Insights</h5>
-        <p class="text-muted">Recommendations</p>
-        {% comment %} <button class="btn btn-outline-secondary btn-sm" disabled>
-          Locked
-        </button> {% endcomment %}
-        <a href="{% url 'daily_logs:ai_insights' %}"
-           class="btn btn-outline-primary btn-sm">
-           View Insights
-        </a>
-        <a href="{% url 'daily_logs:ai_summary' %}"
-           class="btn btn-outline-primary btn-sm">
-           AI Insights
-        </a>
-
-      </div>
-    </div>
-  </div>
-
 </div>
 {% endblock %}

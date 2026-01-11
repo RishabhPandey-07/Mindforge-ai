@@ -16,10 +16,20 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+from django.shortcuts import redirect
 
+
+def root_redirect(request):
+    """
+    Redirects root URL '/' to dashboard.
+    LoginRequiredMiddleware will handle auth.
+    """
+    return redirect("dashboard")
 urlpatterns = [
-    path('admin/', admin.site.urls),
-    path ('accounts/', include('accounts.urls')),
-    path('', include('core.urls')),
+    path("", root_redirect),   # 👈 THIS FIXES YOUR 404
+    path("admin/", admin.site.urls),
+    path("accounts/", include("accounts.urls")),
+    path("home/", include("core.urls")),
+    path("dashboard/", include("core.urls")),
     path("logs/", include("daily_logs.urls")),
 ]
