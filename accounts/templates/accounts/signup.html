@@ -1,27 +1,56 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Signup</title>
-</head>
-<body>
 {% extends "core/base.html" %}
 
-    {% block content %}
-        <h2>User Signup</h2>
+{% block title %}Sign Up | MindForge AI{% endblock %}
 
-        {% if messages %}
-            {% for message in messages %}
-                <p>{{ message }}</p>
-            {% endfor %}
-        {% endif %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-5">
 
-        <form method="post">
-            {% csrf_token %}
-            <input type="text" name="username" placeholder="Username" required><br><br>
-            <input type="email" name="email" placeholder="Email" required><br><br>
-            <input type="password" name="password" placeholder="Password" required><br><br>
-            <button type="submit">Sign Up</button>
-        </form>
-    {% endblock %}
-</body>
-</html>
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h4 class="mb-3 text-center">Create Account</h4>
+
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="alert alert-danger">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+
+                <form method="POST">
+                    {% csrf_token %}
+
+                    <div class="mb-3">
+                        <label class="form-label">Username</label>
+                        <input type="text" name="username"
+                               class="form-control" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Email (optional)</label>
+                        <input type="email" name="email"
+                               class="form-control">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Password</label>
+                        <input type="password" name="password"
+                               class="form-control" required>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100">
+                        Sign Up
+                    </button>
+                </form>
+
+                <p class="text-center mt-3">
+                    Already have an account?
+                    <a href="{% url 'login' %}">Login</a>
+                </p>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

@@ -1,70 +1,78 @@
-
 {% extends "core/base.html" %}
 
-{% block title %}Dashboard{% endblock %}
+{% block title %}Dashboard | MindForge AI{% endblock %}
 
 {% block content %}
-<div class="container mt-5">
 
-    <h2>Welcome, {{ user.username }} 👋</h2>
+<div class="mb-4">
+    <h2>Welcome, {{ user.username }}</h2>
     <p class="text-muted">
-        This is your personal AI-powered reflection space.
+        Your personal AI-powered reflection and growth system.
     </p>
-
-    <div class="row mt-4">
-
-        <!-- Logs -->
-        <div class="col-md-3">
-            <div class="card shadow-sm text-center">
-                <div class="card-body">
-                    <h5>📝 Daily Logs</h5>
-                    <p>Write and manage your thoughts.</p>
-                    <a href="{% url 'daily_logs:log_list' %}" class="btn btn-primary btn-sm">
-                        View Logs
-                    </a>
-                </div>
-            </div>
-        </div>
-
-        <!-- AI Summary -->
-        <div class="col-md-3">
-            <div class="card shadow-sm text-center">
-                <div class="card-body">
-                    <h5>🤖 AI Summary</h5>
-                    <p>AI-generated insights.</p>
-                    <a href="{% url 'daily_logs:ai_summary' %}" class="btn btn-success btn-sm">
-                        View Summary
-                    </a>
-                </div>
-            </div>
-        </div>
-
-        <!-- Mood Trends -->
-        <div class="col-md-3">
-            <div class="card shadow-sm text-center">
-                <div class="card-body">
-                    <h5>📈 Mood Trends</h5>
-                    <p>Track emotional patterns.</p>
-                    <a href="{% url 'daily_logs:mood_trends' %}" class="btn btn-info btn-sm">
-                        View Trends
-                    </a>
-                </div>
-            </div>
-        </div>
-
-        <!-- Chat -->
-        <div class="col-md-3">
-            <div class="card shadow-sm text-center">
-                <div class="card-body">
-                    <h5>💬 Chat</h5>
-                    <p>Ask questions to your logs.</p>
-                    <a href="{% url 'daily_logs:chat_logs' %}" class="btn btn-warning btn-sm">
-                        Start Chat
-                    </a>
-                </div>
-            </div>
-        </div>
-
-    </div>
 </div>
+
+<div class="row g-4">
+
+    <!-- Daily Logs -->
+    <div class="col-md-3">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body">
+                <h5 class="card-title">Daily Logs</h5>
+                <p class="card-text">
+                    Capture your thoughts, progress, and daily experiences.
+                </p>
+                <a href="{% url 'daily_logs:log_list' %}" class="btn btn-primary w-100">
+                    Open Logs
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- AI Summary -->
+    <div class="col-md-3">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body">
+                <h5 class="card-title">AI Insights</h5>
+                <p class="card-text">
+                    Get intelligent summaries and recommendations.
+                </p>
+                <a href="{% url 'daily_logs:ai_summary' %}" class="btn btn-success w-100">
+                    View Insights
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mood Trends -->
+    <div class="col-md-3">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body">
+                <h5 class="card-title">Mood Trends</h5>
+                <p class="card-text">
+                    Visualize emotional and productivity patterns.
+                </p>
+                <a href="{% url 'daily_logs:mood_trends' %}" class="btn btn-info w-100">
+                    View Trends
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chat -->
+    <div class="col-md-3">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body">
+                <h5 class="card-title">AI Chat</h5>
+                <p class="card-text">
+                    Ask questions directly to your personal data.
+                </p>
+                <a href="{% url 'daily_logs:chat_logs' %}" class="btn btn-warning w-100">
+                    Start Chat
+                </a>
+            </div>
+        </div>
+    </div>
+
+</div>
+
 {% endblock %}

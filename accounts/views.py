@@ -4,29 +4,41 @@ from django.contrib import messages
 from .models import Profile
 from django.contrib.auth import authenticate, login, logout
 
+def user_signup(request):
+    """
+    Handles new user registration.
+    Creates a user and logs them in immediately.
+    """
 
-def signup(request):
     if request.method == "POST":
         username = request.POST.get("username")
         email = request.POST.get("email")
         password = request.POST.get("password")
 
-        if User.objects.filter(username=username).exists():
-            messages.error(request, "Username already exists")
+        # Basic validation
+        if not username or not password:
+            messages.error(request, "Username and password are required.")
             return redirect("signup")
 
+        # Check if username already exists
+        if User.objects.filter(username=username).exists():
+            messages.error(request, "Username already taken.")
+            return redirect("signup")
+
+        # Create user
         user = User.objects.create_user(
             username=username,
             email=email,
             password=password
         )
 
-        Profile.objects.create(user=user)
+        # Auto login after signup
+        login(request, user)
 
-        messages.success(request, "Account created successfully. Please login.")
-        return redirect("login")
+        return redirect("dashboard")
 
     return render(request, "accounts/signup.html")
+
 
 def user_login(request):
     if request.method == "POST":
