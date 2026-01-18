@@ -3,76 +3,156 @@
 {% block title %}Dashboard | MindForge AI{% endblock %}
 
 {% block content %}
+<style>
+    /* Custom Modern Styling */
+    .dashboard-header {
+        background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+        color: white;
+        border-radius: 16px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    }
 
-<div class="mb-4">
-    <h2>Welcome, {{ user.username }}</h2>
-    <p class="text-muted">
-        Your personal AI-powered reflection and growth system.
-    </p>
+    .glass-card {
+        background: rgba(255, 255, 255, 0.9);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 16px;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .action-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        border-color: #6366f1;
+    }
+
+    .stat-label {
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: #64748b;
+    }
+
+    .stat-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #1e293b;
+    }
+
+    .icon-box {
+        width: 48px;
+        height: 48px;
+        background: #f1f5f9;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1rem;
+        font-size: 1.5rem;
+    }
+</style>
+
+<div class="container-fluid py-4">
+    
+    <div class="dashboard-header d-flex justify-content-between align-items-center">
+        <div>
+            <h2 class="fw-bold mb-1">Welcome back, {{ user.username|title }}!</h2>
+            <p class="mb-0 opacity-75">Here is what’s happening with your MindForge today.</p>
+        </div>
+        <div class="d-none d-md-block">
+            <span class="badge bg-white text-primary p-2 px-3 rounded-pill">
+                <i class="bi bi-calendar3 me-2"></i>{% now "jS F Y" %}
+            </span>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-5">
+        <div class="col-md-3">
+            <div class="glass-card p-4 text-center h-100 shadow-sm">
+                <p class="stat-label mb-2">Total Logs</p>
+                <div class="stat-value text-primary">{{ total_logs }}</div>
+                <div class="mt-2 small text-muted">All-time entries</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="glass-card p-4 text-center h-100 shadow-sm">
+                <p class="stat-label mb-2">Last Activity</p>
+                <div class="stat-value">
+                    {% if last_log %}{{ last_log.created_at|timesince }}{% else %}None{% endif %}
+                </div>
+                <div class="mt-2 small text-muted">Since your last entry</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="glass-card p-4 text-center h-100 shadow-sm">
+                <p class="stat-label mb-2">Current Mood</p>
+                <div class="stat-value">
+                    {% if mood_today %}{{ mood_today.mood }}{% else %}—{% endif %}
+                </div>
+                <div class="mt-2">
+                    <span class="badge {% if mood_today %}bg-success-soft{% else %}bg-light{% endif %} text-dark">
+                        AI Analyzed
+                    </span>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="glass-card p-4 text-center h-100 shadow-sm">
+                <p class="stat-label mb-2">Mind Score</p>
+                <div class="stat-value text-purple">
+                    {% if mood_today %}{{ mood_today.score }}<span class="fs-6 text-muted">/10</span>{% else %}N/A{% endif %}
+                </div>
+                <div class="progress mt-3" style="height: 6px;">
+                    <div class="progress-bar bg-primary" role="progressbar" style="width: {{ mood_today.score }}0%"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <h4 class="fw-bold mb-4">Quick Actions</h4>
+    <div class="row g-4">
+        <div class="col-md-3">
+            <a href="{% url 'daily_logs:add_log' %}" class="text-decoration-none">
+                <div class="glass-card action-card p-4 text-center h-100">
+                    <div class="icon-box text-primary">✍️</div>
+                    <h5 class="fw-bold text-dark">New Log</h5>
+                    <p class="small text-muted mb-0">Record your thoughts and tasks for today.</p>
+                </div>
+            </a>
+        </div>
+
+        <div class="col-md-3">
+            <a href="{% url 'daily_logs:ai_summary' %}" class="text-decoration-none">
+                <div class="glass-card action-card p-4 text-center h-100">
+                    <div class="icon-box text-purple">🧠</div>
+                    <h5 class="fw-bold text-dark">AI Insights</h5>
+                    <p class="small text-muted mb-0">Let AI find patterns in your productivity.</p>
+                </div>
+            </a>
+        </div>
+
+        <div class="col-md-3">
+            <a href="{% url 'daily_logs:mood_trends' %}" class="text-decoration-none">
+                <div class="glass-card action-card p-4 text-center h-100">
+                    <div class="icon-box text-danger">📈</div>
+                    <h5 class="fw-bold text-dark">Trends</h5>
+                    <p class="small text-muted mb-0">Visualize your emotional journey over time.</p>
+                </div>
+            </a>
+        </div>
+
+        <div class="col-md-3">
+            <a href="{% url 'daily_logs:chat_logs' %}" class="text-decoration-none">
+                <div class="glass-card action-card p-4 text-center h-100">
+                    <div class="icon-box text-success">💬</div>
+                    <h5 class="fw-bold text-dark">Mind Chat</h5>
+                    <p class="small text-muted mb-0">Talk to your history and get instant advice.</p>
+                </div>
+            </a>
+        </div>
+    </div>
+
 </div>
-
-<div class="row g-4">
-
-    <!-- Daily Logs -->
-    <div class="col-md-3">
-        <div class="card h-100 shadow-sm">
-            <div class="card-body">
-                <h5 class="card-title">Daily Logs</h5>
-                <p class="card-text">
-                    Capture your thoughts, progress, and daily experiences.
-                </p>
-                <a href="{% url 'daily_logs:log_list' %}" class="btn btn-primary w-100">
-                    Open Logs
-                </a>
-            </div>
-        </div>
-    </div>
-
-    <!-- AI Summary -->
-    <div class="col-md-3">
-        <div class="card h-100 shadow-sm">
-            <div class="card-body">
-                <h5 class="card-title">AI Insights</h5>
-                <p class="card-text">
-                    Get intelligent summaries and recommendations.
-                </p>
-                <a href="{% url 'daily_logs:ai_summary' %}" class="btn btn-success w-100">
-                    View Insights
-                </a>
-            </div>
-        </div>
-    </div>
-
-    <!-- Mood Trends -->
-    <div class="col-md-3">
-        <div class="card h-100 shadow-sm">
-            <div class="card-body">
-                <h5 class="card-title">Mood Trends</h5>
-                <p class="card-text">
-                    Visualize emotional and productivity patterns.
-                </p>
-                <a href="{% url 'daily_logs:mood_trends' %}" class="btn btn-info w-100">
-                    View Trends
-                </a>
-            </div>
-        </div>
-    </div>
-
-    <!-- Chat -->
-    <div class="col-md-3">
-        <div class="card h-100 shadow-sm">
-            <div class="card-body">
-                <h5 class="card-title">AI Chat</h5>
-                <p class="card-text">
-                    Ask questions directly to your personal data.
-                </p>
-                <a href="{% url 'daily_logs:chat_logs' %}" class="btn btn-warning w-100">
-                    Start Chat
-                </a>
-            </div>
-        </div>
-    </div>
-
-</div>
-
 {% endblock %}

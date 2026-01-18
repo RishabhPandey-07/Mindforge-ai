@@ -29,7 +29,6 @@ urlpatterns = [
     path("", root_redirect),   # 👈 THIS FIXES YOUR 404
     path("admin/", admin.site.urls),
     path("accounts/", include("accounts.urls")),
-    path("home/", include("core.urls")),
     path("dashboard/", include("core.urls")),
     path("logs/", include("daily_logs.urls")),
 ]

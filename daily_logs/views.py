@@ -2,39 +2,39 @@
 views.py
 
 Handles all HTTP request/response logic for daily logs,
-AI insights, caching, and mood trends.
+AI insights, caching, chat, and mood trends.
 
-Important rules followed here:
-- No business logic outside view functions
-- No duplicate views
-- Clean imports
+Security rules:
+- login_required protects private pages
+- never_cache prevents back-button access after logout
 """
 
 from django.contrib import messages
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
+from django.views.decorators.cache import never_cache
 from django.core.cache import cache
 from django.utils.timezone import now
-from .ai_service import chat_with_logs
-
 
 from collections import Counter
 import re
 
 from .models import DailyLog, MoodTrend
-from .ai_service import generate_log_summary
+from .ai_service import generate_log_summary, chat_with_logs
 
 
 # --------------------------------------------------
 # DAILY LOG CRUD
 # --------------------------------------------------
 
+@never_cache
 @login_required
 def log_list(request):
     logs = DailyLog.objects.filter(user=request.user).order_by("-created_at")
     return render(request, "daily_logs/log_list.html", {"logs": logs})
 
 
+@never_cache
 @login_required
 def add_log(request):
     if request.method == "POST":
@@ -51,6 +51,7 @@ def add_log(request):
     return render(request, "daily_logs/add_log.html")
 
 
+@never_cache
 @login_required
 def delete_log(request, log_id):
     log = get_object_or_404(DailyLog, id=log_id, user=request.user)
@@ -62,6 +63,7 @@ def delete_log(request, log_id):
     return redirect("daily_logs:log_list")
 
 
+@never_cache
 @login_required
 def edit_log(request, log_id):
     log = get_object_or_404(DailyLog, id=log_id, user=request.user)
@@ -82,6 +84,7 @@ def edit_log(request, log_id):
 # BASIC (NON-AI) INSIGHTS
 # --------------------------------------------------
 
+@never_cache
 @login_required
 def ai_insights(request):
     logs = DailyLog.objects.filter(user=request.user)
@@ -93,7 +96,6 @@ def ai_insights(request):
 
     full_text = " ".join(log.content for log in logs)
 
-    # Clean text and extract words
     words = re.findall(r"\b\w+\b", full_text.lower())
     common_words = Counter(words).most_common(5)
 
@@ -110,18 +112,19 @@ def ai_insights(request):
 # AI SUMMARY + CACHING + MOOD TREND STORAGE
 # --------------------------------------------------
 
+@never_cache
 @login_required
 def ai_summary(request):
     """
-    Generates AI summary using Groq.
+    Generates AI summary.
     Uses cache to avoid repeated calls.
-    Stores daily mood trend (1 entry per day).
+    Stores one mood trend per day.
     """
 
     user = request.user
     cache_key = f"ai_summary_user_{user.id}"
 
-    # --------- 1. Cache check ----------
+    # 1. Cache check
     cached_result = cache.get(cache_key)
     if cached_result:
         return render(request, "daily_logs/ai_summary.html", {
@@ -129,7 +132,7 @@ def ai_summary(request):
             "cached": True
         })
 
-    # --------- 2. Fetch logs ----------
+    # 2. Fetch logs
     logs = DailyLog.objects.filter(user=user)
     if not logs.exists():
         return render(request, "daily_logs/ai_summary.html", {
@@ -138,10 +141,10 @@ def ai_summary(request):
 
     combined_text = "\n".join(log.content for log in logs)
 
-    # --------- 3. Call AI ----------
+    # 3. AI call
     ai_result = generate_log_summary(combined_text)
 
-    # --------- 4. Save mood trend ----------
+    # 4. Save mood trend
     today = now().date()
 
     MoodTrend.objects.update_or_create(
@@ -153,7 +156,7 @@ def ai_summary(request):
         }
     )
 
-    # --------- 5. Cache result ----------
+    # 5. Cache result
     cache.set(cache_key, ai_result, timeout=3600)
 
     return render(request, "daily_logs/ai_summary.html", {
@@ -166,45 +169,44 @@ def ai_summary(request):
 # MOOD TRENDS VIEW
 # --------------------------------------------------
 
+@never_cache
 @login_required
 def mood_trends(request):
     """
-    Displays historical mood trends for the user
-    and prepares data for graph visualization.
+    Displays historical mood trends and prepares graph data.
     """
 
     trends = MoodTrend.objects.filter(user=request.user)
 
-    # Prepare data for chart (backend responsibility)
     dates = [t.created_at.strftime("%d %b") for t in trends]
     scores = [t.score for t in trends]
 
-    context = {
+    return render(request, "daily_logs/mood_trends.html", {
         "trends": trends,
         "dates": dates,
         "scores": scores,
-    }
+    })
 
-    return render(request, "daily_logs/mood_trends.html", context)
 
+# --------------------------------------------------
+# CHAT WITH LOGS
+# --------------------------------------------------
+
+@never_cache
 @login_required
 def chat_logs(request):
     """
-    Handles chat interaction between the user and their logs.
+    Handles AI chat based on user's logs.
     """
 
     answer = None
 
     if request.method == "POST":
         question = request.POST.get("question")
-
-        # Collect all logs for this user
         logs = DailyLog.objects.filter(user=request.user)
 
         if logs.exists() and question:
             combined_logs = "\n".join(log.content for log in logs)
-
-            # Call AI chat service
             answer = chat_with_logs(combined_logs, question)
 
     return render(request, "daily_logs/chat.html", {
