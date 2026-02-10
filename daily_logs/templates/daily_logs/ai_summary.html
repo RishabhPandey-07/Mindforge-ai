@@ -1,28 +1,57 @@
 {% extends "core/base.html" %}
 
 {% block title %}AI Insights{% endblock %}
-{% if cached %}
-    <div class="alert alert-success">
-        ⚡ Showing cached AI insights (fast response)
-    </div>
-{% endif %}
-
 
 {% block content %}
 <div class="container mt-4">
 
-    <h2>🤖 AI Reflection</h2>
+    <div class="d-flex align-items-center justify-content-between mb-3">
+        <h2 class="mb-0">AI Reflection</h2>
+        {% if cached %}
+            <span class="badge text-bg-success">Cached</span>
+        {% endif %}
+    </div>
 
     {% if error %}
         <div class="alert alert-warning">
             {{ error }}
         </div>
     {% else %}
-        <div class="card mt-3 shadow-sm">
+        <div class="row g-3">
+            <div class="col-md-4">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body">
+                        <p class="text-uppercase text-muted small mb-1">Mood</p>
+                        <h4 class="mb-0">{{ mood }}</h4>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body">
+                        <p class="text-uppercase text-muted small mb-1">Score</p>
+                        <h4 class="mb-0">{{ score }}/10</h4>
+                        <div class="progress mt-2" style="height: 6px;">
+                            <div class="progress-bar" role="progressbar"
+                                 style="width: {{ score }}0%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body">
+                        <p class="text-uppercase text-muted small mb-1">Suggestion</p>
+                        <p class="mb-0">{{ suggestion }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card shadow-sm mt-3">
             <div class="card-body">
-                <pre style="white-space: pre-wrap;">
-{{ ai_result }}
-                </pre>
+                <p class="text-uppercase text-muted small mb-1">Summary</p>
+                <p class="mb-0">{{ summary }}</p>
             </div>
         </div>
     {% endif %}

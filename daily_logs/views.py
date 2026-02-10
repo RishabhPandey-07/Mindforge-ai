@@ -23,6 +23,20 @@ from .models import DailyLog, MoodTrend
 from .ai_service import generate_log_summary, chat_with_logs
 
 
+def _safe_score(score_value) -> int:
+    """
+    Best-effort parsing for AI score output.
+    Accepts "7", "7/10", "Score: 7", etc.
+    """
+    if score_value is None:
+        return 0
+    match = re.search(r"\d+", str(score_value))
+    if not match:
+        return 0
+    score = int(match.group(0))
+    return max(0, min(score, 10))
+
+
 # --------------------------------------------------
 # DAILY LOG CRUD
 # --------------------------------------------------
@@ -122,27 +136,37 @@ def ai_summary(request):
     """
 
     user = request.user
-    cache_key = f"ai_summary_user_{user.id}"
-
-    # 1. Cache check
-    cached_result = cache.get(cache_key)
-    if cached_result:
-        return render(request, "daily_logs/ai_summary.html", {
-            "ai_result": cached_result,
-            "cached": True
-        })
-
-    # 2. Fetch logs
+    # 1. Fetch logs
     logs = DailyLog.objects.filter(user=user)
     if not logs.exists():
         return render(request, "daily_logs/ai_summary.html", {
             "error": "No logs available for AI analysis."
         })
 
+    # 2. Cache check (keyed by latest log)
+    latest_log = logs.order_by("-created_at").first()
+    latest_log_id = latest_log.id if latest_log else 0
+    cache_key = f"ai_summary_user_{user.id}_lastlog_{latest_log_id}"
+    cached_result = cache.get(cache_key)
+    if cached_result:
+        return render(request, "daily_logs/ai_summary.html", {
+            "ai_result": cached_result,
+            "mood": cached_result.get("mood", "Unknown"),
+            "score": _safe_score(cached_result.get("score", 0)),
+            "summary": cached_result.get("summary", ""),
+            "suggestion": cached_result.get("suggestion", ""),
+            "cached": True
+        })
+
     combined_text = "\n".join(log.content for log in logs)
 
     # 3. AI call
-    ai_result = generate_log_summary(combined_text)
+    try:
+        ai_result = generate_log_summary(combined_text)
+    except RuntimeError as exc:
+        return render(request, "daily_logs/ai_summary.html", {
+            "error": str(exc)
+        })
 
     # 4. Save mood trend
     today = now().date()
@@ -152,7 +176,7 @@ def ai_summary(request):
         created_at=today,
         defaults={
             "mood": ai_result.get("mood", "Unknown"),
-            "score": int(ai_result.get("score", 0))
+            "score": _safe_score(ai_result.get("score", 0))
         }
     )
 
@@ -161,6 +185,10 @@ def ai_summary(request):
 
     return render(request, "daily_logs/ai_summary.html", {
         "ai_result": ai_result,
+        "mood": ai_result.get("mood", "Unknown"),
+        "score": _safe_score(ai_result.get("score", 0)),
+        "summary": ai_result.get("summary", ""),
+        "suggestion": ai_result.get("suggestion", ""),
         "cached": False
     })
 
@@ -200,15 +228,31 @@ def chat_logs(request):
     """
 
     answer = None
+    error = None
 
     if request.method == "POST":
         question = request.POST.get("question")
         logs = DailyLog.objects.filter(user=request.user)
 
-        if logs.exists() and question:
-            combined_logs = "\n".join(log.content for log in logs)
-            answer = chat_with_logs(combined_logs, question)
+        if not question:
+            error = "Please enter a question."
+        elif not logs.exists():
+            error = "No logs available to answer your question yet."
+        else:
+            log_items = list(
+                logs.order_by("-created_at")
+                .values_list("created_at", "content")
+            )
+            formatted_logs = [
+                (dt.strftime("%Y-%m-%d"), content)
+                for dt, content in log_items
+            ]
+            try:
+                answer = chat_with_logs(formatted_logs, question)
+            except RuntimeError as exc:
+                error = str(exc)
 
     return render(request, "daily_logs/chat.html", {
-        "answer": answer
+        "answer": answer,
+        "error": error
     })

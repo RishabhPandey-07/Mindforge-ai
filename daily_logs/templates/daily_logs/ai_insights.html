@@ -5,32 +5,29 @@
 {% block content %}
 <div class="container mt-4">
 
-    <h2>🤖 AI Insights</h2>
+    <h2>AI Insights</h2>
 
     {% if message %}
         <div class="alert alert-warning">
             {{ message }}
         </div>
     {% else %}
-        <ul class="list-group mt-3">
-            <li class="list-group-item">
-                <strong>Total Logs:</strong> {{ total_logs }}
-            </li>
-
-            <li class="list-group-item">
-                <strong>Last Activity:</strong>
-                {{ last_log_date|date:"d M Y, h:i A" }}
-            </li>
-
-            <li class="list-group-item">
-                <strong>Most Common Words:</strong>
-                <ul>
+        <div class="card shadow-sm mt-3">
+            <div class="card-body">
+                <p class="mb-2"><strong>Total Logs:</strong> {{ total_logs }}</p>
+                <p class="mb-3"><strong>Last Activity:</strong>
+                    {{ last_log_date|date:"d M Y, h:i A" }}
+                </p>
+                <p class="mb-2"><strong>Most Common Words:</strong></p>
+                <div class="d-flex flex-wrap gap-2">
                     {% for word, count in common_words %}
-                        <li>{{ word }} ({{ count }})</li>
+                        <span class="badge text-bg-light border">
+                            {{ word }} ({{ count }})
+                        </span>
                     {% endfor %}
-                </ul>
-            </li>
-        </ul>
+                </div>
+            </div>
+        </div>
     {% endif %}
 
 </div>

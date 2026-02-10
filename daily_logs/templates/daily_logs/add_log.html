@@ -3,7 +3,10 @@
 {% block content %}
 <div class="container mt-4">
 
-    <h2>Add Daily Log</h2>
+    <div class="mb-4">
+        <h2 class="mb-1">Add Daily Log</h2>
+        <p class="text-muted mb-0">Capture how your day went in a few lines.</p>
+    </div>
 
     <form method="post">
         {% csrf_token %}
@@ -11,11 +14,11 @@
         <div class="mb-3">
             <textarea name="content"
                       class="form-control"
-                      rows="5"
-                      placeholder="Write your thoughts..."></textarea>
+                      rows="6"
+                      placeholder="Write your thoughts..." required></textarea>
         </div>
 
-        <button type="submit" class="btn btn-success">
+        <button type="submit" class="btn btn-primary">
             Save Log
         </button>
 
