@@ -1,65 +1,3 @@
-# from django.shortcuts import render, redirect
-# from django.contrib.auth.models import User
-# from django.contrib import messages
-# from .models import Profile
-# from django.contrib.auth import authenticate, login, logout
-
-# def user_signup(request):
-#     """
-#     Handles new user registration.
-#     Creates a user and logs them in immediately.
-#     """
-
-#     if request.method == "POST":
-#         username = request.POST.get("username")
-#         email = request.POST.get("email")
-#         password = request.POST.get("password")
-
-#         # Basic validation
-#         if not username or not password:
-#             messages.error(request, "Username and password are required.")
-#             return redirect("signup")
-
-#         # Check if username already exists
-#         if User.objects.filter(username=username).exists():
-#             messages.error(request, "Username already taken.")
-#             return redirect("signup")
-
-#         # Create user
-#         user = User.objects.create_user(
-#             username=username,
-#             email=email,
-#             password=password
-#         )
-
-#         # Auto login after signup
-#         login(request, user)
-
-#         return redirect("dashboard")
-
-#     return render(request, "accounts/signup.html")
-
-
-# def user_login(request):
-#     if request.method == "POST":
-#         username = request.POST.get("username")
-#         password = request.POST.get("password")
-
-#         user = authenticate(request, username=username, password=password)
-
-#         if user is not None:
-#             login(request, user)
-#             return redirect("dashboard")
-#         else:
-#             messages.error(request, "Invalid username or password")
-#             return redirect("login")
-
-#     return render(request, "accounts/login.html")
-
-# def user_logout(request):
-#     logout(request)
-#     return redirect("login")
-
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
 from django.contrib.auth.password_validation import validate_password
@@ -73,6 +11,18 @@ from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.conf import settings
 from django.views.decorators.cache import never_cache
+
+from daily_logs.models import ProductEvent
+
+
+def _track_event(user, name: str, metadata: dict | None = None):
+    if not settings.PRODUCT_EVENT_TRACKING_ENABLED:
+        return
+    ProductEvent.objects.create(
+        user=user,
+        name=name,
+        metadata=metadata or {},
+    )
 
 
 @never_cache
@@ -109,6 +59,7 @@ def user_login(request):
             # Successful login
             login(request, user)
             cache.delete(rate_key)
+            _track_event(user, "user_logged_in")
             return redirect("dashboard")
         else:
             # Invalid credentials
@@ -182,6 +133,7 @@ def user_signup(request):
         )
 
         messages.success(request, "Check your email to verify your account.")
+        _track_event(user, "signup_started")
         return redirect("login")
 
     return render(request, "accounts/signup.html")
@@ -197,6 +149,8 @@ def user_logout(request):
     - Back button will NOT show protected pages
     """
 
+    if request.user.is_authenticated:
+        _track_event(request.user, "user_logged_out")
     logout(request)
     return redirect("login")
 
@@ -212,6 +166,7 @@ def verify_email(request, uidb64, token):
     if user and default_token_generator.check_token(user, token):
         user.is_active = True
         user.save()
+        _track_event(user, "email_verified")
         messages.success(request, "Email verified. You can log in now.")
         return redirect("login")
 

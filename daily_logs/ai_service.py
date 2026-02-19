@@ -96,6 +96,38 @@ Daily Logs:
     return result
 
 
+def generate_weekly_review(log_text: str) -> dict:
+    """
+    Create a weekly reflection that is action-oriented.
+    """
+    prompt = f"""
+You are a personal performance coach.
+
+Analyze the weekly logs and respond STRICTLY in this format:
+
+WINS: <2 concise lines>
+CHALLENGES: <2 concise lines>
+FOCUS: <one clear action for next week>
+
+WEEKLY LOGS:
+{log_text}
+"""
+    response = _get_client().chat.completions.create(
+        model="llama-3.1-8b-instant",
+        messages=[{"role": "user", "content": prompt}],
+    )
+    ai_text = response.choices[0].message.content
+    result = {"wins": "", "challenges": "", "focus": ""}
+    for line in ai_text.splitlines():
+        if line.startswith("WINS:"):
+            result["wins"] = line.replace("WINS:", "").strip()
+        elif line.startswith("CHALLENGES:"):
+            result["challenges"] = line.replace("CHALLENGES:", "").strip()
+        elif line.startswith("FOCUS:"):
+            result["focus"] = line.replace("FOCUS:", "").strip()
+    return result
+
+
 def _tokenize(text: str) -> list[str]:
     return [w for w in re.findall(r"\b\w+\b", text.lower()) if len(w) > 2]
 
@@ -136,7 +168,7 @@ def _select_relevant_logs(
     return picked if picked else logs[:max_logs]
 
 
-def chat_with_logs(logs: list[tuple[str, str]], user_question: str) -> str:
+def chat_with_logs(logs: list[tuple[str, str]], user_question: str) -> dict:
     """
     Allows the user to chat with their own logs.
 
@@ -145,7 +177,7 @@ def chat_with_logs(logs: list[tuple[str, str]], user_question: str) -> str:
     - user_question (str): User's question
 
     Output:
-    - AI-generated answer grounded strictly in the logs
+    - Structured answer with evidence and next step
     """
 
     selected_logs = _select_relevant_logs(logs, user_question)
@@ -162,8 +194,13 @@ RULES:
 - If the logs do not contain enough information, say you do not have enough
   evidence from the logs and ask a concise clarifying question.
 - When you can infer a likely reason, explain it briefly and ground it in the logs.
-- Provide a short "Evidence" section citing relevant dates from the logs.
+- Provide a short "EVIDENCE" section citing relevant dates from the logs.
 - Keep the tone supportive and concise.
+
+Respond STRICTLY in this format:
+ANSWER: <short paragraph>
+EVIDENCE: <date-based evidence, semicolon separated>
+NEXT_STEP: <one practical next step>
 
 USER LOGS:
 {context}
@@ -179,4 +216,21 @@ QUESTION:
         ]
     )
 
-    return response.choices[0].message.content
+    ai_text = response.choices[0].message.content
+    parsed = {
+        "answer": "",
+        "evidence": "",
+        "next_step": "",
+        "raw": ai_text,
+    }
+    for line in ai_text.splitlines():
+        if line.startswith("ANSWER:"):
+            parsed["answer"] = line.replace("ANSWER:", "").strip()
+        elif line.startswith("EVIDENCE:"):
+            parsed["evidence"] = line.replace("EVIDENCE:", "").strip()
+        elif line.startswith("NEXT_STEP:"):
+            parsed["next_step"] = line.replace("NEXT_STEP:", "").strip()
+
+    if not parsed["answer"]:
+        parsed["answer"] = ai_text.strip()
+    return parsed

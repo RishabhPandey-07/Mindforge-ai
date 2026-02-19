@@ -8,6 +8,7 @@ urlpatterns = [
     path("edit/<int:log_id>/", views.edit_log, name="edit_log"),
     path("ai/", views.ai_insights, name="ai_insights"),
     path("ai-summary/", views.ai_summary, name="ai_summary"),
+    path("weekly-review/", views.weekly_review, name="weekly_review"),
     path("trends/", views.mood_trends, name="mood_trends"),
     path("chat/", views.chat_logs, name="chat_logs"),
 

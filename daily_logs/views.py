@@ -15,12 +15,15 @@ from django.contrib.auth.decorators import login_required
 from django.views.decorators.cache import never_cache
 from django.core.cache import cache
 from django.utils.timezone import now
+from django.conf import settings
 
 from collections import Counter
 import re
+from datetime import timedelta
 
-from .models import DailyLog, MoodTrend
-from .ai_service import generate_log_summary, chat_with_logs
+from .models import DailyLog, MoodTrend, WeeklyReview, ProductEvent
+from .ai_service import chat_with_logs
+from .tasks import generate_ai_summary_task, generate_weekly_review_task
 
 
 def _safe_score(score_value) -> int:
@@ -35,6 +38,27 @@ def _safe_score(score_value) -> int:
         return 0
     score = int(match.group(0))
     return max(0, min(score, 10))
+
+
+def _track_event(user, name: str, metadata: dict | None = None):
+    if not settings.PRODUCT_EVENT_TRACKING_ENABLED:
+        return
+    ProductEvent.objects.create(
+        user=user,
+        name=name,
+        metadata=metadata or {},
+    )
+
+
+def _queue_task(task, *args):
+    """
+    Queue a background task. Returns True on success.
+    """
+    try:
+        task.delay(*args)
+        return True
+    except Exception:
+        return False
 
 
 # --------------------------------------------------
@@ -55,9 +79,14 @@ def add_log(request):
         content = request.POST.get("content")
 
         if content:
-            DailyLog.objects.create(
+            log = DailyLog.objects.create(
                 user=request.user,
                 content=content
+            )
+            _track_event(
+                request.user,
+                "log_created",
+                {"log_id": log.id, "content_chars": len(content)},
             )
             messages.success(request, "Daily log added successfully.")
             return redirect("daily_logs:log_list")
@@ -72,6 +101,7 @@ def delete_log(request, log_id):
 
     if request.method == "POST":
         log.delete()
+        _track_event(request.user, "log_deleted", {"log_id": log_id})
         messages.success(request, "Daily log deleted.")
 
     return redirect("daily_logs:log_list")
@@ -88,6 +118,11 @@ def edit_log(request, log_id):
         if content:
             log.content = content
             log.save()
+            _track_event(
+                request.user,
+                "log_edited",
+                {"log_id": log.id, "content_chars": len(content)},
+            )
             messages.success(request, "Daily log updated.")
             return redirect("daily_logs:log_list")
 
@@ -149,6 +184,7 @@ def ai_summary(request):
     cache_key = f"ai_summary_user_{user.id}_lastlog_{latest_log_id}"
     cached_result = cache.get(cache_key)
     if cached_result:
+        _track_event(user, "ai_summary_viewed", {"cached": True})
         return render(request, "daily_logs/ai_summary.html", {
             "ai_result": cached_result,
             "mood": cached_result.get("mood", "Unknown"),
@@ -158,38 +194,24 @@ def ai_summary(request):
             "cached": True
         })
 
-    combined_text = "\n".join(log.content for log in logs)
-
-    # 3. AI call
-    try:
-        ai_result = generate_log_summary(combined_text)
-    except RuntimeError as exc:
+    pending_key = f"{cache_key}:pending"
+    if cache.get(pending_key):
         return render(request, "daily_logs/ai_summary.html", {
-            "error": str(exc)
+            "processing": True,
+            "cached": False,
         })
 
-    # 4. Save mood trend
-    today = now().date()
+    queued = _queue_task(generate_ai_summary_task, user.id, latest_log_id)
+    if not queued:
+        return render(request, "daily_logs/ai_summary.html", {
+            "error": "AI worker is not reachable. Start Celery worker and retry.",
+        })
 
-    MoodTrend.objects.update_or_create(
-        user=user,
-        created_at=today,
-        defaults={
-            "mood": ai_result.get("mood", "Unknown"),
-            "score": _safe_score(ai_result.get("score", 0))
-        }
-    )
-
-    # 5. Cache result
-    cache.set(cache_key, ai_result, timeout=3600)
-
+    cache.set(pending_key, True, timeout=300)
+    _track_event(user, "ai_summary_queued", {"last_log_id": latest_log_id})
     return render(request, "daily_logs/ai_summary.html", {
-        "ai_result": ai_result,
-        "mood": ai_result.get("mood", "Unknown"),
-        "score": _safe_score(ai_result.get("score", 0)),
-        "summary": ai_result.get("summary", ""),
-        "suggestion": ai_result.get("suggestion", ""),
-        "cached": False
+        "processing": True,
+        "cached": False,
     })
 
 
@@ -216,6 +238,59 @@ def mood_trends(request):
     })
 
 
+@never_cache
+@login_required
+def weekly_review(request):
+    user = request.user
+    today = now().date()
+    week_start = today - timedelta(days=today.weekday())
+    week_logs = DailyLog.objects.filter(
+        user=user,
+        created_at__date__gte=week_start,
+    ).order_by("created_at")
+
+    if not week_logs.exists():
+        return render(request, "daily_logs/weekly_review.html", {
+            "error": "No logs found for this week. Add a few entries first.",
+            "week_start": week_start,
+        })
+
+    latest_log = week_logs.last()
+    latest_log_id = latest_log.id if latest_log else 0
+    cache_key = f"weekly_review_user_{user.id}_{week_start}_lastlog_{latest_log_id}"
+    cached_result = cache.get(cache_key)
+    if cached_result:
+        _track_event(user, "weekly_review_viewed", {"cached": True})
+        return render(request, "daily_logs/weekly_review.html", {
+            "review": cached_result,
+            "week_start": week_start,
+            "cached": True,
+        })
+
+    pending_key = f"{cache_key}:pending"
+    if cache.get(pending_key):
+        return render(request, "daily_logs/weekly_review.html", {
+            "processing": True,
+            "week_start": week_start,
+            "cached": False,
+        })
+
+    queued = _queue_task(generate_weekly_review_task, user.id, week_start.isoformat(), latest_log_id)
+    if not queued:
+        return render(request, "daily_logs/weekly_review.html", {
+            "error": "AI worker is not reachable. Start Celery worker and retry.",
+            "week_start": week_start,
+        })
+
+    cache.set(pending_key, True, timeout=300)
+    _track_event(user, "weekly_review_queued", {"week_start": week_start.isoformat()})
+    return render(request, "daily_logs/weekly_review.html", {
+        "processing": True,
+        "week_start": week_start,
+        "cached": False,
+    })
+
+
 # --------------------------------------------------
 # CHAT WITH LOGS
 # --------------------------------------------------
@@ -228,6 +303,8 @@ def chat_logs(request):
     """
 
     answer = None
+    evidence = None
+    next_step = None
     error = None
 
     if request.method == "POST":
@@ -248,11 +325,26 @@ def chat_logs(request):
                 for dt, content in log_items
             ]
             try:
-                answer = chat_with_logs(formatted_logs, question)
+                result = chat_with_logs(formatted_logs, question)
+                answer = result.get("answer")
+                evidence = result.get("evidence")
+                next_step = result.get("next_step")
+                _track_event(
+                    request.user,
+                    "chat_asked",
+                    {"question_chars": len(question), "answered": bool(answer)},
+                )
             except RuntimeError as exc:
                 error = str(exc)
+                _track_event(
+                    request.user,
+                    "chat_asked",
+                    {"question_chars": len(question), "answered": False},
+                )
 
     return render(request, "daily_logs/chat.html", {
         "answer": answer,
+        "evidence": evidence,
+        "next_step": next_step,
         "error": error
     })

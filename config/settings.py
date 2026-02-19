@@ -202,6 +202,97 @@ CSRF_TRUSTED_ORIGINS = [
     if origin.strip()
 ]
 
+# Product analytics events (internal usage metrics)
+PRODUCT_EVENT_TRACKING_ENABLED = _env_bool(
+    "DJANGO_PRODUCT_EVENT_TRACKING_ENABLED",
+    "True",
+)
+
+# Async task queue (Celery + Redis)
+CELERY_BROKER_URL = os.getenv("CELERY_BROKER_URL", "redis://127.0.0.1:6379/0")
+CELERY_RESULT_BACKEND = os.getenv("CELERY_RESULT_BACKEND", CELERY_BROKER_URL)
+CELERY_ACCEPT_CONTENT = ["json"]
+CELERY_TASK_SERIALIZER = "json"
+CELERY_RESULT_SERIALIZER = "json"
+CELERY_TIMEZONE = TIME_ZONE
+CELERY_TASK_ALWAYS_EAGER = _env_bool("CELERY_TASK_ALWAYS_EAGER", "False")
+
+
+# --------------------------------------------------
+# Logging (structured plain-text logs with env control)
+# --------------------------------------------------
+LOG_LEVEL = os.getenv("DJANGO_LOG_LEVEL", "INFO").upper()
+SQL_LOG_ENABLED = _env_bool("DJANGO_SQL_LOG", "False")
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "standard": {
+            "format": "%(asctime)s %(levelname)s %(name)s %(message)s",
+            "datefmt": "%Y-%m-%d %H:%M:%S",
+        },
+    },
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "standard",
+        },
+    },
+    "root": {
+        "handlers": ["console"],
+        "level": LOG_LEVEL,
+    },
+    "loggers": {
+        "django": {
+            "handlers": ["console"],
+            "level": LOG_LEVEL,
+            "propagate": False,
+        },
+        "accounts": {
+            "handlers": ["console"],
+            "level": LOG_LEVEL,
+            "propagate": False,
+        },
+        "core": {
+            "handlers": ["console"],
+            "level": LOG_LEVEL,
+            "propagate": False,
+        },
+        "daily_logs": {
+            "handlers": ["console"],
+            "level": LOG_LEVEL,
+            "propagate": False,
+        },
+        "django.db.backends": {
+            "handlers": ["console"],
+            "level": "DEBUG" if SQL_LOG_ENABLED else "WARNING",
+            "propagate": False,
+        },
+    },
+}
+
+
+# --------------------------------------------------
+# Sentry error monitoring
+# --------------------------------------------------
+SENTRY_DSN = os.getenv("SENTRY_DSN", "")
+if SENTRY_DSN:
+    try:
+        import sentry_sdk
+        from sentry_sdk.integrations.django import DjangoIntegration
+
+        sentry_sdk.init(
+            dsn=SENTRY_DSN,
+            environment=os.getenv("SENTRY_ENVIRONMENT", "development"),
+            traces_sample_rate=float(os.getenv("SENTRY_TRACES_SAMPLE_RATE", "0.1")),
+            send_default_pii=_env_bool("SENTRY_SEND_PII", "False"),
+            integrations=[DjangoIntegration()],
+        )
+    except ImportError:
+        # Keeps app booting if sentry-sdk is not installed in local setup.
+        pass
+
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field

@@ -16,6 +16,15 @@
         <div class="alert alert-warning">
             {{ error }}
         </div>
+    {% elif processing %}
+        <div class="alert alert-info">
+            AI summary is being generated in the background. This page will refresh automatically.
+        </div>
+        <script>
+            setTimeout(function () {
+                window.location.reload();
+            }, 3000);
+        </script>
     {% else %}
         <div class="row g-3">
             <div class="col-md-4">

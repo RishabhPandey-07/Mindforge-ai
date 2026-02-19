@@ -34,6 +34,15 @@
             <div class="card-body">
                 <h5>AI Answer</h5>
                 <p>{{ answer }}</p>
+                {% if evidence %}
+                    <hr>
+                    <p class="text-uppercase text-muted small mb-1">Evidence</p>
+                    <p class="mb-2">{{ evidence }}</p>
+                {% endif %}
+                {% if next_step %}
+                    <p class="text-uppercase text-muted small mb-1">Next Step</p>
+                    <p class="mb-0">{{ next_step }}</p>
+                {% endif %}
             </div>
         </div>
     {% endif %}

@@ -1,14 +1,29 @@
 {% extends "core/base.html" %}
+{% load static %}
 
 {% block title %}Dashboard | MindForge AI{% endblock %}
 
 {% block content %}
 <style>
   .hero {
-    background: linear-gradient(120deg, rgba(14,165,164,0.18), rgba(245,158,11,0.15));
+    background: linear-gradient(120deg, rgba(14,165,164,0.2), rgba(245,158,11,0.16));
     border: 1px solid rgba(15,23,42,0.06);
     border-radius: 20px;
     padding: 2rem;
+  }
+  .hero-image-wrap {
+    width: 220px;
+    height: 140px;
+    border-radius: 14px;
+    overflow: hidden;
+    border: 1px solid rgba(15,23,42,0.08);
+    box-shadow: 0 14px 26px -14px rgba(15,23,42,0.4);
+  }
+  .hero-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
   }
   .stat-card {
     background: #ffffff;
@@ -22,15 +37,27 @@
     transform: translateY(-4px);
     box-shadow: 0 16px 24px -12px rgba(15,23,42,0.25);
   }
-  .icon-tile {
-    width: 44px;
-    height: 44px;
+  .action-image {
+    height: 112px;
     border-radius: 12px;
-    background: rgba(14,165,164,0.12);
-    color: var(--mf-accent);
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
+    overflow: hidden;
+    margin-bottom: 0.9rem;
+  }
+  .action-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.35s ease;
+    display: block;
+  }
+  .action-card:hover .action-image img {
+    transform: scale(1.04);
+  }
+  @media (max-width: 767.98px) {
+    .hero-image-wrap {
+      width: 100%;
+      height: 160px;
+    }
   }
 </style>
 
@@ -40,8 +67,18 @@
             <h2 class="fw-bold mb-1">Welcome back, {{ user.username|title }}</h2>
             <p class="mb-0 text-muted">Here is a quick snapshot of your MindForge today.</p>
         </div>
-        <div class="badge badge-soft px-3 py-2">
-            <i class="bi bi-calendar3 me-2"></i>{% now "jS F Y" %}
+        <div class="d-flex align-items-center gap-3">
+            <div class="badge badge-soft px-3 py-2">
+                <i class="bi bi-calendar3 me-2"></i>{% now "jS F Y" %}
+            </div>
+            <div class="hero-image-wrap">
+                <img
+                    class="hero-image"
+                    src="{% static 'images/dashboard/hero.jpg' %}"
+                    alt="Mindful journaling"
+                    loading="lazy"
+                >
+            </div>
         </div>
     </div>
 
@@ -95,8 +132,12 @@
         <div class="col-md-3">
             <a href="{% url 'daily_logs:add_log' %}" class="text-decoration-none">
                 <div class="stat-card action-card p-4 text-center h-100">
-                    <div class="icon-tile mb-3">
-                        <i class="bi bi-pencil-square"></i>
+                    <div class="action-image">
+                        <img
+                            src="{% static 'images/dashboard/new-log.jpg' %}"
+                            alt="Writing in journal"
+                            loading="lazy"
+                        >
                     </div>
                     <h5 class="fw-bold text-dark">New Log</h5>
                     <p class="small text-muted mb-0">Capture thoughts, tasks, and wins.</p>
@@ -107,8 +148,12 @@
         <div class="col-md-3">
             <a href="{% url 'daily_logs:ai_summary' %}" class="text-decoration-none">
                 <div class="stat-card action-card p-4 text-center h-100">
-                    <div class="icon-tile mb-3">
-                        <i class="bi bi-lightbulb"></i>
+                    <div class="action-image">
+                        <img
+                            src="{% static 'images/dashboard/ai-insights.jpg' %}"
+                            alt="AI analysis on screen"
+                            loading="lazy"
+                        >
                     </div>
                     <h5 class="fw-bold text-dark">AI Insights</h5>
                     <p class="small text-muted mb-0">Spot patterns in your routines.</p>
@@ -119,8 +164,12 @@
         <div class="col-md-3">
             <a href="{% url 'daily_logs:mood_trends' %}" class="text-decoration-none">
                 <div class="stat-card action-card p-4 text-center h-100">
-                    <div class="icon-tile mb-3">
-                        <i class="bi bi-graph-up"></i>
+                    <div class="action-image">
+                        <img
+                            src="{% static 'images/dashboard/trends.jpg' %}"
+                            alt="Charts and trends dashboard"
+                            loading="lazy"
+                        >
                     </div>
                     <h5 class="fw-bold text-dark">Trends</h5>
                     <p class="small text-muted mb-0">Track mood changes over time.</p>
@@ -131,8 +180,12 @@
         <div class="col-md-3">
             <a href="{% url 'daily_logs:chat_logs' %}" class="text-decoration-none">
                 <div class="stat-card action-card p-4 text-center h-100">
-                    <div class="icon-tile mb-3">
-                        <i class="bi bi-chat-dots"></i>
+                    <div class="action-image">
+                        <img
+                            src="{% static 'images/dashboard/mind-chat.jpg' %}"
+                            alt="Conversation and guidance"
+                            loading="lazy"
+                        >
                     </div>
                     <h5 class="fw-bold text-dark">Mind Chat</h5>
                     <p class="small text-muted mb-0">Ask questions about your history.</p>
@@ -140,5 +193,38 @@
             </a>
         </div>
     </div>
+    <div class="row g-4 mt-1">
+        <div class="col-md-3">
+            <a href="{% url 'daily_logs:weekly_review' %}" class="text-decoration-none">
+                <div class="stat-card action-card p-4 text-center h-100">
+                    <div class="action-image">
+                        <img
+                            src="{% static 'images/dashboard/weekly-review.jpg' %}"
+                            alt="Weekly planning notes"
+                            loading="lazy"
+                        >
+                    </div>
+                    <h5 class="fw-bold text-dark">Weekly Review</h5>
+                    <p class="small text-muted mb-0">Get wins, challenges, and next focus.</p>
+                </div>
+            </a>
+        </div>
+    </div>
+    {% if latest_weekly_review %}
+    <div class="card shadow-sm mt-4">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-start gap-3">
+                <div>
+                    <p class="text-uppercase text-muted small mb-1">Latest Weekly Focus</p>
+                    <p class="mb-1">{{ latest_weekly_review.focus }}</p>
+                    <small class="text-muted">Week of {{ latest_weekly_review.week_start|date:"d M Y" }}</small>
+                </div>
+                <a href="{% url 'daily_logs:weekly_review' %}" class="btn btn-outline-primary btn-sm">
+                    Open Weekly Review
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endif %}
 </div>
 {% endblock %}

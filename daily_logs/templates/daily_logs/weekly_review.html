@@ -1,0 +1,57 @@
+{% extends "core/base.html" %}
+
+{% block title %}Weekly Review{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex align-items-center justify-content-between mb-3">
+        <div>
+            <h2 class="mb-1">Weekly AI Review</h2>
+            <p class="text-muted mb-0">Week starting {{ week_start|date:"d M Y" }}</p>
+        </div>
+        {% if cached %}
+            <span class="badge text-bg-success">Cached</span>
+        {% endif %}
+    </div>
+
+    {% if error %}
+        <div class="alert alert-warning">{{ error }}</div>
+    {% elif processing %}
+        <div class="alert alert-info">
+            Weekly review is being generated in the background. This page will refresh automatically.
+        </div>
+        <script>
+            setTimeout(function () {
+                window.location.reload();
+            }, 3000);
+        </script>
+    {% else %}
+        <div class="row g-3">
+            <div class="col-md-4">
+                <div class="card shadow-sm h-100">
+                    <div class="card-body">
+                        <p class="text-uppercase text-muted small mb-1">Wins</p>
+                        <p class="mb-0">{{ review.wins }}</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card shadow-sm h-100">
+                    <div class="card-body">
+                        <p class="text-uppercase text-muted small mb-1">Challenges</p>
+                        <p class="mb-0">{{ review.challenges }}</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card shadow-sm h-100">
+                    <div class="card-body">
+                        <p class="text-uppercase text-muted small mb-1">Focus For Next Week</p>
+                        <p class="mb-0">{{ review.focus }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

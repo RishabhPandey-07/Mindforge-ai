@@ -1,3 +1,44 @@
 from django.test import TestCase
+from django.contrib.auth.models import User
+from django.urls import reverse
 
-# Create your tests here.
+from .models import DailyLog
+
+
+class DailyLogsTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username="loguser",
+            password="StrongPass#123",
+            email="loguser@example.com",
+            is_active=True,
+        )
+
+    def test_log_list_requires_login(self):
+        response = self.client.get(reverse("daily_logs:log_list"))
+        self.assertEqual(response.status_code, 302)
+        self.assertIn(reverse("login"), response.url)
+
+    def test_add_log_creates_entry(self):
+        self.client.login(username="loguser", password="StrongPass#123")
+        response = self.client.post(
+            reverse("daily_logs:add_log"),
+            data={"content": "Today I felt focused and calm."},
+        )
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(DailyLog.objects.filter(user=self.user).exists())
+
+    def test_weekly_review_shows_error_without_logs(self):
+        self.client.login(username="loguser", password="StrongPass#123")
+        response = self.client.get(reverse("daily_logs:weekly_review"))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "No logs found for this week")
+
+    def test_chat_shows_error_without_logs(self):
+        self.client.login(username="loguser", password="StrongPass#123")
+        response = self.client.post(
+            reverse("daily_logs:chat_logs"),
+            data={"question": "Why was I upset today?"},
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "No logs available to answer your question yet.")
