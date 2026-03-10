@@ -1,0 +1,80 @@
+{% extends "core/base.html" %}
+
+{% block title %}Billing | MindForge AI{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <div>
+                            <h3 class="mb-1">Billing and Plan</h3>
+                            <p class="text-muted mb-0">Current plan: {{ subscription.get_plan_display }}</p>
+                        </div>
+                        <span class="badge text-bg-success">{{ subscription.get_status_display }}</span>
+                    </div>
+
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-info">{{ message }}</div>
+                        {% endfor %}
+                    {% endif %}
+
+                    {% if billing_mode != "stripe" %}
+                        <div class="alert alert-warning">
+                            Demo billing is active. Switching to Pro or Team will not ask for payment right now.
+                        </div>
+                    {% elif not stripe_configured %}
+                        <div class="alert alert-warning">
+                            Stripe mode is enabled but not fully configured. Complete the Stripe env variables first.
+                        </div>
+                    {% endif %}
+
+                    <form method="post" class="row g-3">
+                        {% csrf_token %}
+                        <div class="col-md-4">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <h5>Free</h5>
+                                    <p class="text-muted">$0</p>
+                                    <button type="submit" name="plan" value="free" class="btn btn-outline-secondary w-100">
+                                        Switch to Free
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card h-100 border-success">
+                                <div class="card-body">
+                                    <h5>Pro</h5>
+                                    <p class="text-muted">$15/mo</p>
+                                    <button type="submit" name="plan" value="pro" class="btn btn-primary w-100">
+                                        Switch to Pro
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <h5>Team</h5>
+                                    <p class="text-muted">$49/mo</p>
+                                    <button type="submit" name="plan" value="team" class="btn btn-outline-dark w-100">
+                                        Switch to Team
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+
+                    <p class="text-muted small mt-4 mb-0">
+                        Use `BILLING_MODE=demo` while building. Switch to `BILLING_MODE=stripe` only when real checkout is ready.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

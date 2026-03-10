@@ -11,8 +11,21 @@ from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.conf import settings
 from django.views.decorators.cache import never_cache
+from django.contrib.auth.decorators import login_required
+from django.http import HttpResponse, JsonResponse
+from django.views.decorators.csrf import csrf_exempt
 
 from daily_logs.models import ProductEvent
+from .models import Subscription
+from .subscriptions import get_or_create_subscription
+from .plan_catalog import PLAN_CATALOG
+from .stripe_service import (
+    cancel_subscription,
+    create_checkout_session,
+    stripe_is_configured,
+    build_webhook_event,
+    sync_subscription_from_stripe,
+)
 
 
 def _track_event(user, name: str, metadata: dict | None = None):
@@ -111,6 +124,7 @@ def user_signup(request):
         )
         user.is_active = False
         user.save()
+        get_or_create_subscription(user)
 
         # Send verification email
         uid = urlsafe_base64_encode(force_bytes(user.pk))
@@ -172,3 +186,144 @@ def verify_email(request, uidb64, token):
 
     messages.error(request, "Verification link is invalid or expired.")
     return redirect("login")
+
+
+@never_cache
+def pricing(request):
+    current_plan = None
+    if request.user.is_authenticated:
+        current_plan = get_or_create_subscription(request.user).plan
+    return render(
+        request,
+        "accounts/pricing.html",
+        {
+            "plans": PLAN_CATALOG,
+            "current_plan": current_plan,
+            "billing_mode": settings.BILLING_MODE,
+        },
+    )
+
+
+@never_cache
+@login_required
+def billing(request):
+    subscription = get_or_create_subscription(request.user)
+
+    if request.method == "POST":
+        requested_plan = request.POST.get("plan")
+        valid_plans = {
+            Subscription.PLAN_FREE,
+            Subscription.PLAN_PRO,
+            Subscription.PLAN_TEAM,
+        }
+        if requested_plan in valid_plans:
+            if requested_plan == Subscription.PLAN_FREE:
+                if stripe_is_configured():
+                    try:
+                        cancel_subscription(subscription)
+                    except RuntimeError as exc:
+                        messages.error(request, str(exc))
+                        return redirect("billing")
+                else:
+                    subscription.plan = Subscription.PLAN_FREE
+                    subscription.status = Subscription.STATUS_ACTIVE
+                    subscription.current_period_end = None
+                    subscription.save(update_fields=["plan", "status", "current_period_end", "updated_at"])
+                _track_event(request.user, "plan_changed", {"plan": requested_plan})
+                messages.success(request, "Plan changed to Free.")
+                return redirect("billing")
+
+            subscription.plan = requested_plan
+            subscription.save(update_fields=["plan", "updated_at"])
+
+            if not stripe_is_configured():
+                subscription.status = Subscription.STATUS_ACTIVE
+                subscription.save(update_fields=["status", "updated_at"])
+                _track_event(request.user, "plan_changed", {"plan": requested_plan, "mode": "local"})
+                messages.success(request, f"Plan changed to {subscription.get_plan_display()}.")
+                return redirect("billing")
+
+            try:
+                session = create_checkout_session(
+                    subscription=subscription,
+                    success_url=request.build_absolute_uri(reverse("billing_success")),
+                    cancel_url=request.build_absolute_uri(reverse("billing_cancel")),
+                )
+            except RuntimeError as exc:
+                messages.error(request, str(exc))
+                return redirect("billing")
+
+            _track_event(request.user, "checkout_started", {"plan": requested_plan})
+            return redirect(session.url, permanent=False)
+
+        messages.error(request, "Invalid plan selected.")
+
+    return render(
+        request,
+        "accounts/billing.html",
+        {
+            "subscription": subscription,
+            "stripe_configured": stripe_is_configured(),
+            "billing_mode": settings.BILLING_MODE,
+        },
+    )
+
+
+@never_cache
+@login_required
+def billing_success(request):
+    messages.success(request, "Checkout completed. Your plan will update as soon as Stripe confirms payment.")
+    return redirect("billing")
+
+
+@never_cache
+@login_required
+def billing_cancel(request):
+    messages.info(request, "Checkout was canceled. Your plan has not changed.")
+    return redirect("billing")
+
+
+@csrf_exempt
+def stripe_webhook(request):
+    if request.method != "POST":
+        return JsonResponse({"detail": "Method not allowed."}, status=405)
+
+    try:
+        event = build_webhook_event(
+            payload=request.body,
+            signature=request.META.get("HTTP_STRIPE_SIGNATURE", ""),
+        )
+    except Exception:
+        return JsonResponse({"detail": "Invalid webhook signature."}, status=400)
+
+    event_type = event["type"]
+    if event_type in {
+        "checkout.session.completed",
+        "customer.subscription.created",
+        "customer.subscription.updated",
+        "customer.subscription.deleted",
+    }:
+        obj = event["data"]["object"]
+        stripe_subscription = obj
+        if event_type == "checkout.session.completed" and obj.get("subscription"):
+            try:
+                import stripe
+
+                stripe.api_key = settings.STRIPE_SECRET_KEY
+                stripe_subscription = stripe.Subscription.retrieve(obj["subscription"])
+            except Exception:
+                return JsonResponse({"detail": "Unable to fetch subscription."}, status=400)
+
+        subscription = sync_subscription_from_stripe(stripe_subscription)
+        if subscription:
+            _track_event(
+                subscription.user,
+                "stripe_subscription_synced",
+                {
+                    "plan": subscription.plan,
+                    "status": subscription.status,
+                    "event_type": event_type,
+                },
+            )
+
+    return HttpResponse(status=200)

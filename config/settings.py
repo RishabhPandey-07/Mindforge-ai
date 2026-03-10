@@ -176,6 +176,14 @@ DEFAULT_FROM_EMAIL = os.getenv(
     "no-reply@mindforge.local",
 )
 
+# Stripe billing
+BILLING_MODE = os.getenv("BILLING_MODE", "demo").lower()
+STRIPE_SECRET_KEY = os.getenv("STRIPE_SECRET_KEY", "")
+STRIPE_PUBLISHABLE_KEY = os.getenv("STRIPE_PUBLISHABLE_KEY", "")
+STRIPE_WEBHOOK_SECRET = os.getenv("STRIPE_WEBHOOK_SECRET", "")
+STRIPE_PRICE_ID_PRO = os.getenv("STRIPE_PRICE_ID_PRO", "")
+STRIPE_PRICE_ID_TEAM = os.getenv("STRIPE_PRICE_ID_TEAM", "")
+
 
 # --------------------------------------------------
 # Security settings (recommended for production)

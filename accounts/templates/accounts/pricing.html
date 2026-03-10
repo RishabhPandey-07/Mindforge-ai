@@ -1,0 +1,45 @@
+{% extends "core/base.html" %}
+
+{% block title %}Pricing | MindForge AI{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="text-center mb-5">
+        <h2 class="fw-bold mb-2">Choose a plan that fits your workflow</h2>
+        <p class="text-muted mb-0">Start free, then unlock premium AI workflows as usage grows.</p>
+        {% if billing_mode != "stripe" %}
+        <div class="alert alert-info mt-3">
+            Demo billing is active. Plans can be changed without payment while the product is still being built.
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="row g-4 justify-content-center">
+        {% for plan in plans %}
+        <div class="col-md-4">
+            <div class="card shadow-sm h-100 {% if current_plan == plan.code %}border-success{% endif %}">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h4 class="mb-0">{{ plan.name }}</h4>
+                        {% if current_plan == plan.code %}
+                        <span class="badge text-bg-success">Current</span>
+                        {% endif %}
+                    </div>
+                    <p class="display-6 fw-bold mb-3">{{ plan.price }}</p>
+                    <ul class="list-unstyled text-muted">
+                        {% for feature in plan.features %}
+                        <li class="mb-2">{{ feature }}</li>
+                        {% endfor %}
+                    </ul>
+                    {% if user.is_authenticated %}
+                    <a href="{% url 'billing' %}" class="btn btn-primary w-100">Manage Plan</a>
+                    {% else %}
+                    <a href="{% url 'signup' %}" class="btn btn-primary w-100">Create Account</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

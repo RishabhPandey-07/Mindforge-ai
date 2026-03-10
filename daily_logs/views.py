@@ -16,6 +16,7 @@ from django.views.decorators.cache import never_cache
 from django.core.cache import cache
 from django.utils.timezone import now
 from django.conf import settings
+from django.urls import reverse
 
 from collections import Counter
 import re
@@ -24,6 +25,7 @@ from datetime import timedelta
 from .models import DailyLog, MoodTrend, WeeklyReview, ProductEvent
 from .ai_service import chat_with_logs
 from .tasks import generate_ai_summary_task, generate_weekly_review_task
+from accounts.subscriptions import has_feature
 
 
 def _safe_score(score_value) -> int:
@@ -59,6 +61,13 @@ def _queue_task(task, *args):
         return True
     except Exception:
         return False
+
+
+def _require_feature(request, feature_name: str):
+    if has_feature(request.user, feature_name):
+        return None
+    messages.info(request, "This feature is available on Pro and Team plans.")
+    return redirect(reverse("pricing"))
 
 
 # --------------------------------------------------
@@ -171,6 +180,9 @@ def ai_summary(request):
     """
 
     user = request.user
+    feature_redirect = _require_feature(request, "ai_summary")
+    if feature_redirect:
+        return feature_redirect
     # 1. Fetch logs
     logs = DailyLog.objects.filter(user=user)
     if not logs.exists():
@@ -242,6 +254,9 @@ def mood_trends(request):
 @login_required
 def weekly_review(request):
     user = request.user
+    feature_redirect = _require_feature(request, "weekly_review")
+    if feature_redirect:
+        return feature_redirect
     today = now().date()
     week_start = today - timedelta(days=today.weekday())
     week_logs = DailyLog.objects.filter(
@@ -306,6 +321,10 @@ def chat_logs(request):
     evidence = None
     next_step = None
     error = None
+
+    feature_redirect = _require_feature(request, "mind_chat")
+    if feature_redirect:
+        return feature_redirect
 
     if request.method == "POST":
         question = request.POST.get("question")

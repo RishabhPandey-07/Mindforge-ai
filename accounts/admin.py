@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Profile
+from .models import Profile, Subscription
 
 admin.site.register(Profile)
-# Register your models here.
+admin.site.register(Subscription)

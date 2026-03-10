@@ -3,6 +3,7 @@ from django.contrib.auth.models import User
 from django.urls import reverse
 
 from .models import DailyLog
+from accounts.models import Subscription
 
 
 class DailyLogsTests(TestCase):
@@ -31,8 +32,8 @@ class DailyLogsTests(TestCase):
     def test_weekly_review_shows_error_without_logs(self):
         self.client.login(username="loguser", password="StrongPass#123")
         response = self.client.get(reverse("daily_logs:weekly_review"))
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "No logs found for this week")
+        self.assertEqual(response.status_code, 302)
+        self.assertRedirects(response, reverse("pricing"))
 
     def test_chat_shows_error_without_logs(self):
         self.client.login(username="loguser", password="StrongPass#123")
@@ -40,5 +41,12 @@ class DailyLogsTests(TestCase):
             reverse("daily_logs:chat_logs"),
             data={"question": "Why was I upset today?"},
         )
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "No logs available to answer your question yet.")
+        self.assertEqual(response.status_code, 302)
+        self.assertRedirects(response, reverse("pricing"))
+
+    def test_ai_summary_redirects_free_user_to_pricing(self):
+        DailyLog.objects.create(user=self.user, content="I felt calm today.")
+        self.client.login(username="loguser", password="StrongPass#123")
+        response = self.client.get(reverse("daily_logs:ai_summary"))
+        self.assertEqual(response.status_code, 302)
+        self.assertRedirects(response, reverse("pricing"))
